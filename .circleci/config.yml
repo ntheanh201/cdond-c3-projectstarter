@@ -22,6 +22,9 @@ commands:
     description: Revert the last migration if successfully run in the current workflow.
     parameters:
       # Add parameter here
+      workflowId:
+        type: string
+        description: Workflow ID
     steps:
       - run:
           name: Revert migrations
@@ -187,9 +190,9 @@ jobs:
 
   run-migrations:
     docker:
-      # Docker image here that supports NodeJS
+      - image: circleci/node:13.8.0
     steps:
-      # Checkout code from git
+      - checkout
       - run:
           name: Run migrations
           command: |
@@ -204,7 +207,7 @@ jobs:
 
   deploy-frontend:
     docker:
-      # Docker image here that supports AWS CLI
+      - image: cimg/base:stable
     steps:
       # Checkout code from git
       - run:
@@ -225,9 +228,9 @@ jobs:
 
   deploy-backend:
     docker:
-      # Docker image here that supports Ansible
+      - image: cimg/base:stable
     steps:
-      # Checkout code from git
+      - checkout
       # Add ssh keys with fingerprint
       # attach workspace
       - run:
@@ -242,9 +245,9 @@ jobs:
 
   smoke-test:
     docker:
-      # Lightweight Docker image
+      - image: cimg/base:stable
     steps:
-      # Checkout code from git
+      - checkout
       - run:
           name: Install dependencies
           command: |
@@ -265,9 +268,9 @@ jobs:
 
   cloudfront-update:
     docker:
-      # Docker image here that supports AWS CLI
+      - image: amazon/aws-cli
     steps:
-      # Checkout code from git
+      - checkout
       - run:
           name: Install dependencies
           command: |
@@ -278,11 +281,11 @@ jobs:
             # your code here
       # Here's where you will add some code to rollback on failure  
 
-cleanup:
+  cleanup:
     docker:
-      # Docker image here
+      - image: cimg/base:stable
     steps:
-      # Checkout code from git
+      - checkout
       - run:
           name: Get old stack workflow id
           command: |
