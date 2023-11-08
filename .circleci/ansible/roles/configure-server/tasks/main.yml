@@ -1,0 +1,30 @@
+---
+- name: Import environment
+  shell:  |
+    echo TYPEORM_CONNECTION >> .env
+
+- name: Upgrade package
+  apt:
+    upgrade: yes
+    update_cache: yes
+
+- name: Remove old dependencies
+  apt:
+    autoremove: yes
+    autoclean: yes
+
+- name: Install dependencies
+  package:
+    name: "{{ item }}"
+    state: present
+    update_cache: yes
+  loop:
+    - nodejs
+    - npm
+
+- name: Install pm2
+  npm:
+    name: pm2
+    global: yes
+    production: yes
+    state: present

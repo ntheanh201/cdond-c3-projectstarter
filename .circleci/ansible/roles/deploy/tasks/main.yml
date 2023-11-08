@@ -1,0 +1,25 @@
+---
+- name: Create directory
+  file:
+    path: "{{ dir }}"
+    state: directory
+    mode: 0777
+
+- name: Copy compressed backend folder
+  copy:
+    src: artifact.tar.gz
+    dest: "{{ dir }}/artifact.tar.gz"
+
+- name: Extract backend
+  unarchive:
+    remote_src: yes
+    src: "{{ dir }}/artifact.tar.gz"
+    dest: "{{ dir }}"
+
+- name: Run the web server
+  shell:
+    cmd: |
+      cd {{ dir }}
+      npm install
+      pm2 stop default
+      pm2 start npm -- start

@@ -4,19 +4,24 @@ commands:
   destroy-environment:
     description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
     parameters:
-      # Add parameter here   
+      workflowId:
+        type: string
+        description: Workflow ID
     steps:
       - run:
           name: Destroy environments
           when: on_fail
           command: |
-            # Your code here
-            exit 1
+            echo "Distroy environment: ${CIRCLE_WORKFLOW_ID:0:7} "
+            aws s3 rm "s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7}" --recursive
+            aws cloudformation delete-stack --stack-name udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}
+            aws cloudformation delete-stack --stack-name udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}
+            aws cloudformation delete-stack --stack-name InitialStack-${OldWorkflowID}
 
   revert-migrations:
     description: Revert the last migration if successfully run in the current workflow.
     parameters:
-      # Add parameter here     
+      # Add parameter here
     steps:
       - run:
           name: Revert migrations
@@ -31,7 +36,7 @@ commands:
             #  Add revert code here. You can find this in the Getting Started section.
               exit 1
             fi
-            
+
 jobs:
   build-frontend:
     docker:
@@ -43,8 +48,9 @@ jobs:
       - run:
           name: Build front-end
           command: |
-            # Your code here
-            exit 1
+            cd frontend
+            npm install
+            npm run build
       - save_cache:
           paths: [frontend/node_modules]
           key: frontend-build
@@ -59,66 +65,94 @@ jobs:
       - run:
           name: Back-end build
           command: |
-             # Your code here
-             exit 1
+            cd backend
+            npm install
+            npm run build
       - save_cache:
           paths: [backend/node_modules]
           key: backend-build
 
   test-frontend:
     docker:
-      # Docker image here
+      - image: circleci/node:13.8.0
     steps:
-      # Checkout code from git
-      # Restore from cache
-      # Your job code here
-                
+      - checkout
+      - restore_cache:
+          keys: [frontend-build]
+      - run:
+          name: Run frontend test
+          command: |
+            cd frontend
+            npm install
+            npm run test
   test-backend:
     docker:
-      # Docker image here
+      - image: circleci/node:13.8.0
     steps:
-      # Checkout code from git
-      # Restore from cache
-      # Your job code here
-            
+      - checkout
+      - restore_cache:
+          keys: [backend-build]
+      - run:
+          name: Run backend test
+          command: |
+            cd backend
+            npm install
+            npm run test
+
   scan-frontend:
     docker:
-      # Docker image here
+      - image: circleci/node:13.8.0
     steps:
-      # Checkout code from git
-      # Restore from cache
-      # Your job code here
+      - checkout
+      - restore_cache:
+          keys: [frontend-build]
+      - run:
+          name: Run frontend scan
+          command: |
+            cd frontend
+            npm install
+            npm audit fix --audit-level=critical --force
+            npm audit fix --force
+            npm audit --audit-level=critical
 
   scan-backend:
     docker:
-      # Docker image here
+      - image: circleci/node:13.8.0
     steps:
-      # Checkout code from git
-      # Restore from cache
-      # Your job code here
+      - checkout
+      - restore_cache:
+          keys: [ backend-build ]
+      - run:
+          name: Run backend scan for project
+          command: |
+            cd frontend
+            npm install
+            npm audit fix --audit-level=critical --force
+            npm audit fix --force
+            npm audit --audit-level=critical
 
   deploy-infrastructure:
     docker:
-      # Docker image here that supports AWS CLI
+      - image: amazon/aws-cli
     steps:
-      # Checkout code from git
+      - checkout
       - run:
           name: Ensure back-end infrastructure exists
           command: |
             aws cloudformation deploy \
               --template-file .circleci/files/backend.yml \
-              #--tags project=your-tag \
-              # --stack-name "your back-end stack name with workflow id" \
-              # --parameter-overrides ID="your workflow id"  
+              --tags project=udapeople \
+               --stack-name "udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}" \
+               --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"  
               exit 1
       - run:
           name: Ensure front-end infrastructure exist
           command: |
             aws cloudformation deploy \
               --template-file .circleci/files/frontend.yml \
-              #--tags project=your-tag \
-              # --stack-name "your front-end stack name with workflow id" \
-              # --parameter-overrides ID="your workflow id"  
+              --tags project=udapeople \
+               --stack-name "udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}" \
+               --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"  
               exit 1
       - run:
           name: Add back-end ip to ansible inventory
@@ -133,11 +167,12 @@ jobs:
 
   configure-infrastructure:
     docker:
-      # Docker image here that supports Ansible
+      - image: python:3.7-alpine3.11
     steps:
       # Checkout code from git
       # Add ssh keys with fingerprint
       # attach workspace
+      - checkout
       - run:
           name: Install dependencies
           command: |
@@ -165,7 +200,7 @@ jobs:
           command: |
             # Your code here
             exit 1
-     # Here's where you will add some code to rollback on failure      
+     # Here's where you will add some code to rollback on failure
 
   deploy-frontend:
     docker:
@@ -186,8 +221,8 @@ jobs:
           name: Deploy frontend objects
           command: |
             # your code here
-      # Here's where you will add some code to rollback on failure      
-                    
+      # Here's where you will add some code to rollback on failure
+
   deploy-backend:
     docker:
       # Docker image here that supports Ansible
@@ -207,7 +242,7 @@ jobs:
 
   smoke-test:
     docker:
-      # Lightweight Docker image 
+      # Lightweight Docker image
     steps:
       # Checkout code from git
       - run:
