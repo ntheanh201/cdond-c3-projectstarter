@@ -47,7 +47,7 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          keys: [frontend-build]
+          keys: [ frontend-build ]
       - run:
           name: Build front-end
           command: |
@@ -55,7 +55,7 @@ jobs:
             npm install
             npm run build
       - save_cache:
-          paths: [frontend/node_modules]
+          paths: [ frontend/node_modules ]
           key: frontend-build
 
   build-backend:
@@ -64,7 +64,7 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          keys: [backend-build]
+          keys: [ backend-build ]
       - run:
           name: Back-end build
           command: |
@@ -72,7 +72,7 @@ jobs:
             npm install
             npm run build
       - save_cache:
-          paths: [backend/node_modules]
+          paths: [ backend/node_modules ]
           key: backend-build
 
   test-frontend:
@@ -81,7 +81,7 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          keys: [frontend-build]
+          keys: [ frontend-build ]
       - run:
           name: Run frontend test
           command: |
@@ -94,7 +94,7 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          keys: [backend-build]
+          keys: [ backend-build ]
       - run:
           name: Run backend test
           command: |
@@ -108,7 +108,7 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          keys: [frontend-build]
+          keys: [ frontend-build ]
       - run:
           name: Scan frontend dependencies
           command: |
@@ -122,7 +122,7 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          keys: [backend-build]
+          keys: [ backend-build ]
       - run:
           name: Scan backend dependencies
           command: |
@@ -141,8 +141,8 @@ jobs:
             aws cloudformation deploy \
               --template-file .circleci/files/backend.yml \
               --tags project=udapeople \
-               --stack-name "udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}" \
-               --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"  
+              --stack-name "udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}" \
+              --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"  
               exit 1
       - run:
           name: Ensure front-end infrastructure exist
@@ -150,8 +150,8 @@ jobs:
             aws cloudformation deploy \
               --template-file .circleci/files/frontend.yml \
               --tags project=udapeople \
-               --stack-name "udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}" \
-               --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"  
+              --stack-name "udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}" \
+              --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"  
               exit 1
       - run:
           name: Add back-end ip to ansible inventory
@@ -199,7 +199,7 @@ jobs:
           command: |
             # Your code here
             exit 1
-     # Here's where you will add some code to rollback on failure
+      # Here's where you will add some code to rollback on failure
 
   deploy-frontend:
     docker:
@@ -295,7 +295,7 @@ jobs:
             then
               # your code here
             fi
-            
+
 
 workflows:
   default:
@@ -303,29 +303,29 @@ workflows:
       - build-frontend
       - build-backend
       - test-frontend:
-          requires: [build-frontend]
+          requires: [ build-frontend ]
       - test-backend:
-          requires: [build-backend]
+          requires: [ build-backend ]
       - scan-backend:
-          requires: [build-backend]
+          requires: [ build-backend ]
       - scan-frontend:
-          requires: [build-frontend]
+          requires: [ build-frontend ]
       - deploy-infrastructure:
-          requires: [test-frontend, test-backend, scan-frontend, scan-backend]
+          requires: [ test-frontend, test-backend, scan-frontend, scan-backend ]
           filters:
             branches:
-              only: [test-feature-branch]
+              only: [ test-feature-branch ]
       - configure-infrastructure:
-          requires: [deploy-infrastructure]
+          requires: [ deploy-infrastructure ]
       - run-migrations:
-          requires: [configure-infrastructure]
+          requires: [ configure-infrastructure ]
       - deploy-frontend:
-          requires: [run-migrations]
+          requires: [ run-migrations ]
       - deploy-backend:
-          requires: [run-migrations]
+          requires: [ run-migrations ]
       - smoke-test:
-          requires: [deploy-backend, deploy-frontend]
+          requires: [ deploy-backend, deploy-frontend ]
       - cloudfront-update:
-          requires: [smoke-test]
+          requires: [ smoke-test ]
       - cleanup:
-          requires: [cloudfront-update]
+          requires: [ cloudfront-update ]
