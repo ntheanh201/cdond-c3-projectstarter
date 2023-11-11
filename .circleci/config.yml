@@ -20,7 +20,6 @@ commands:
   revert-migrations:
     description: Revert the last migration if successfully run in the current workflow.
     parameters:
-      # Add parameter here
       workflowId:
         type: string
         description: Workflow ID
@@ -28,16 +27,16 @@ commands:
     steps:
       - run:
           name: Revert migrations
-          # Add when this will run
+          when: on_fail
           command: |
             # Curl command here to see if there was a successful migration associated with the workflow id, store result in SUCCESS variable
-            SUCCESS = 1
+#            SUCCESS=$(curl --insecure  https://kvdb.io/${KVDB_BUCKET_ID}/migration_<< parameters.WorkflowID >>)
+            SUCCESS=1
             if(( $SUCCESS==1 )); 
             then
-            #  cd ~/project/backend
-            #  npm install
-            #  Add revert code here. You can find this in the Getting Started section.
-              exit 1
+              cd ~/project/backend
+              npm install
+              npm run migrations:revert
             fi
 
 jobs:
@@ -192,11 +191,16 @@ jobs:
             sudo apt update -y
             sudo apt install python3-pip -y
       - run:
+          name: Install Ansible
+          command: |
+            python3 -m pip install --user ansible
+      - run:
           name: Configure server
           command: |
-            # Your code here
-            exit 1
-      # Here's where you will add some code to rollback on failure      
+            cd .circleci/ansible
+            cat inventory.txt
+            ansible-playbook -i inventory.txt configure-server.yml
+      - destroy-environment
 
   run-migrations:
     docker:
@@ -204,16 +208,28 @@ jobs:
     steps:
       - checkout
       - run:
+          name: Install AWS CLI v2
+          command: |
+            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+            unzip awscliv2.zip
+            sudo ./aws/install
+      - restore_cache:
+          keys: [ backend-build ]
+      - run:
           name: Run migrations
           command: |
-            # Your code here
-            exit 1
-      - run:
-          name: Send migration results to memstash
-          command: |
-            # Your code here
-            exit 1
-      # Here's where you will add some code to rollback on failure
+            cd backend
+            npm install
+            npm run migrations > migrations.txt
+            cat migrations.txt
+            ls | grep migrations.txt
+#      - run:
+#          name: Send migration results to memstash
+#          command: |
+#            # Your code here
+#            ls
+      - destroy-environment
+      - revert-migrations
 
   deploy-frontend:
     docker:
@@ -221,20 +237,33 @@ jobs:
     steps:
       - checkout
       - run:
+          name: Install AWS CLI v2
+          command: |
+            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+            unzip awscliv2.zip
+            sudo ./aws/install
+      - run:
           name: Install dependencies
           command: |
-            # your code here
+            cd frontend
+            npm install
       - run:
           name: Get backend url
           command: |
-            # your code here
+            BACKEND_IP=$(aws ec2 describe-instances \
+            --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" \
+            --query 'Reservations[*].Instances[*].PublicIpAddress' \
+            --output text)
             export API_URL="http://${BACKEND_IP}:3030"
             echo "${API_URL}"
       - run:
           name: Deploy frontend objects
           command: |
-            # your code here
-      # Here's where you will add some code to rollback on failure
+            cd frontend
+            npm run build
+            aws s3 cp dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
+      - destroy-environment
+      - revert-migrations
 
   deploy-backend:
     docker:
@@ -247,14 +276,30 @@ jobs:
       - attach_workspace:
           at: .circleci/ansible
       - run:
+          name: Install AWS CLI v2
+          command: |
+            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+            unzip awscliv2.zip
+            sudo ./aws/install
+      - run:
           name: Install dependencies
           command: |
-            # your code here
+            sudo apt update -y
+            sudo apt install python3-pip -y
+      - run:
+          name: Install Ansible
+          command: |
+            python3 -m pip install --user ansible
       - run:
           name: Deploy backend
           command: |
             # your code here
-      # Here's where you will add some code to rollback on failure  
+            cd backend
+            npm run build
+            tar -czvf backend.tar.gz dist/* package*
+            cp backend.tar.gz .circleci/ansible/roles/deploy/files
+      - destroy-environment
+      - revert-migrations
 
   smoke-test:
     docker:
@@ -262,22 +307,41 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Install dependencies
+          name: Install AWS CLI v2
           command: |
-            # your code here
-      - run:
-          name: Get backend url
-          command: |
-            # your code here
+            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+            unzip awscliv2.zip
+            sudo ./aws/install
       - run:
           name: Backend smoke test.
           command: |
             # your code here
+            BACKEND_IP=$(aws ec2 describe-instances \
+            --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" \
+            --query 'Reservations[*].Instances[*].PublicIpAddress' \
+            --output text)
+            export API_URL="http://${BACKEND_IP}:3030"
+            echo "${API_URL}"
+            if curl -s "${API_URL}/api/status" | grep "ok"
+            then
+                exit 0
+            else
+                exit 1
+            fi
       - run:
           name: Frontend smoke test.
           command: |
-            # your code here
-      # Here's where you will add some code to rollback on failure  
+            URL="http://udapeople-${CIRCLE_WORKFLOW_ID:0:7}.s3-website-${AWS_DEFAULT_REGION}.amazonaws.com/#/employees"            
+            echo "${URL}" 
+            if curl -s ${URL} | grep "Welcome"
+            then
+                # Change this to 0 after the job fails
+              exit 0
+            else
+              exit 1
+            fi
+      - destroy-environment
+      - revert-migrations
 
   cloudfront-update:
     docker:
