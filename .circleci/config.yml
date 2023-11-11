@@ -30,9 +30,9 @@ commands:
           when: on_fail
           command: |
             # Curl command here to see if there was a successful migration associated with the workflow id, store result in SUCCESS variable
-#            SUCCESS=$(curl --insecure  https://kvdb.io/${KVDB_BUCKET_ID}/migration_<< parameters.WorkflowID >>)
             SUCCESS=1
-            if(( $SUCCESS==1 )); 
+            echo $SUCCESS
+            if ["$SUCCESS" == "1" ]; 
             then
               cd ~/project/backend
               npm install
