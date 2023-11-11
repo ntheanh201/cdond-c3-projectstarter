@@ -136,6 +136,10 @@ jobs:
     steps:
       - checkout
       - run:
+          name: Install tar and gzip
+          command: |
+            yum install -y tar gzip
+      - run:
           name: Ensure back-end infrastructure exists
           command: |
             aws cloudformation deploy \
@@ -156,27 +160,39 @@ jobs:
       - run:
           name: Add back-end ip to ansible inventory
           command: |
-            # Your code here
-            exit 1
+            BACKEND_PUBLIC_IP=$(aws ec2 describe-instances \
+            --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" \
+            --query 'Reservations[*].Instances[*].PublicIpAddress' \
+            --output text)
+            echo $BACKEND_PUBLIC_IP >> .circleci/ansible/inventory.txt
       - persist_to_workspace:
           root: ~/
           paths:
             - project/.circleci/ansible/inventory.txt
-      # Here's where you will add some code to rollback on failure      
+      # Here's where you will add some code to rollback on failure
+      - destroy-environment
 
   configure-infrastructure:
     docker:
       - image: python:3.7-alpine3.11
     steps:
-      # Checkout code from git
-      # Add ssh keys with fingerprint
-      # attach workspace
       - checkout
+      - add_ssh_keys:
+          fingerprints:
+            - 'df:3d:e9:26:62:99:e9:51:7d:0c:19:66:ac:60:da:a6'
+      - attach_workspace:
+          at: .circleci/ansible
+      - run:
+          name: Install AWS CLI v2
+          command: |
+            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+            unzip awscliv2.zip
+            sudo ./aws/install
       - run:
           name: Install dependencies
           command: |
-            # Your code here
-            exit 1
+            sudo apt update -y
+            sudo apt install python3-pip -y
       - run:
           name: Configure server
           command: |
@@ -205,7 +221,7 @@ jobs:
     docker:
       - image: cimg/base:stable
     steps:
-      # Checkout code from git
+      - checkout
       - run:
           name: Install dependencies
           command: |
@@ -227,8 +243,11 @@ jobs:
       - image: cimg/base:stable
     steps:
       - checkout
-      # Add ssh keys with fingerprint
-      # attach workspace
+      - add_ssh_keys:
+          fingerprints:
+            - 'df:3d:e9:26:62:99:e9:51:7d:0c:19:66:ac:60:da:a6'
+      - attach_workspace:
+          at: .circleci/ansible
       - run:
           name: Install dependencies
           command: |
@@ -314,7 +333,7 @@ workflows:
           requires: [ test-frontend, test-backend, scan-frontend, scan-backend ]
           filters:
             branches:
-              only: [ test-feature-branch ]
+              only: [ master ]
       - configure-infrastructure:
           requires: [ deploy-infrastructure ]
       - run-migrations:
