@@ -245,7 +245,7 @@ jobs:
 
   deploy-frontend:
     docker:
-      - image: cimg/base:stable
+      - image: circleci/node:13.8.0
     steps:
       - checkout
       - run:
@@ -305,7 +305,6 @@ jobs:
       - run:
           name: Deploy backend
           command: |
-            cd backend
             echo ENVIRONMENT=production >> "backend/.env"
             echo TYPEORM_MIGRATIONS_DIR=${TYPEORM_MIGRATIONS_DIR} >> "backend/.env"
             echo TYPEORM_ENTITIES=${TYPEORM_ENTITIES} >> "backend/.env"
@@ -315,6 +314,7 @@ jobs:
             echo TYPEORM_USERNAME=${TYPEORM_USERNAME} >> "backend/.env"
             echo TYPEORM_PASSWORD=${TYPEORM_PASSWORD} >> "backend/.env"
             echo TYPEORM_DATABASE=${TYPEORM_DATABASE} >> "backend/.env"
+            cd backend
             npm run build
             tar -czvf backend.tar.gz dist/* package*
             cp backend.tar.gz .circleci/ansible/roles/deploy/files
