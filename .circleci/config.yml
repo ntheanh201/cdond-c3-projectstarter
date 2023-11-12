@@ -217,9 +217,22 @@ jobs:
           keys: [ backend-build ]
       - run:
           name: Run migrations
+          environment:
+            - TYPEORM_CONNECTION: "{{ lookup('env', 'TYPEORM_CONNECTION')}}"
+            - TYPEORM_ENTITIES: "{{ lookup('env', 'TYPEORM_ENTITIES')}}"
+            - TYPEORM_HOST: "{{ lookup('env', 'TYPEORM_HOST')}}"
+            - TYPEORM_PORT: "{{ lookup('env', 'TYPEORM_PORT')}}"
+            - TYPEORM_USERNAME: "{{ lookup('env', 'TYPEORM_USERNAME')}}"
+            - TYPEORM_PASSWORD: "{{ lookup('env', 'TYPEORM_PASSWORD')}}"
+            - TYPEORM_DATABASE: "{{ lookup('env', 'TYPEORM_DATABASE')}}"
+            - TYPEORM_MIGRATIONS: "{{ lookup('env', 'TYPEORM_MIGRATIONS')}}"
+            - TYPEORM_MIGRATIONS_DIR: "{{ lookup('env', 'TYPEORM_MIGRATIONS_DIR')}}"
           command: |
             cd backend
+            echo $TYPEORM_CONNECTION
+            echo $TYPEORM_HOST
             npm install
+            
             npm run migrations > migrations.txt
             cat migrations.txt
             ls | grep migrations.txt
@@ -293,8 +306,16 @@ jobs:
       - run:
           name: Deploy backend
           command: |
-            # your code here
             cd backend
+            echo ENVIRONMENT=production >> "backend/.env"
+            echo TYPEORM_MIGRATIONS_DIR=${TYPEORM_MIGRATIONS_DIR} >> "backend/.env"
+            echo TYPEORM_ENTITIES=${TYPEORM_ENTITIES} >> "backend/.env"
+            echo TYPEORM_MIGRATIONS=${TYPEORM_MIGRATIONS} >> "backend/.env"
+            echo TYPEORM_HOST=${TYPEORM_HOST} >> "backend/.env"
+            echo TYPEORM_PORT=${TYPEORM_PORT} >> "backend/.env"
+            echo TYPEORM_USERNAME=${TYPEORM_USERNAME} >> "backend/.env"
+            echo TYPEORM_PASSWORD=${TYPEORM_PASSWORD} >> "backend/.env"
+            echo TYPEORM_DATABASE=${TYPEORM_DATABASE} >> "backend/.env"
             npm run build
             tar -czvf backend.tar.gz dist/* package*
             cp backend.tar.gz .circleci/ansible/roles/deploy/files
@@ -315,7 +336,6 @@ jobs:
       - run:
           name: Backend smoke test.
           command: |
-            # your code here
             BACKEND_IP=$(aws ec2 describe-instances \
             --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" \
             --query 'Reservations[*].Instances[*].PublicIpAddress' \
@@ -335,8 +355,7 @@ jobs:
             echo "${URL}" 
             if curl -s ${URL} | grep "Welcome"
             then
-                # Change this to 0 after the job fails
-              exit 0
+              exit 1
             else
               exit 1
             fi
