@@ -164,9 +164,9 @@ jobs:
             echo $BACKEND_PUBLIC_IP
             echo $BACKEND_PUBLIC_IP >> .circleci/ansible/inventory.txt
       - persist_to_workspace:
-          root: ~/
+          root: .circleci/ansible
           paths:
-            - .circleci/ansible/inventory.txt
+            - inventory.txt
       - destroy-environment
 
   configure-infrastructure:
