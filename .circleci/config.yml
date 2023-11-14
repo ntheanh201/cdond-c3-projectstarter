@@ -14,9 +14,9 @@ commands:
           when: on_fail
           command: |
             echo "Destroy environment: << parameters.workflowId >> "
-            aws s3 rm "s3://udapeople-<< parameters.workflowId >>" --recursive
-            aws cloudformation delete-stack --stack-name udapeople-backend-<< parameters.workflowId >>
-            aws cloudformation delete-stack --stack-name udapeople-frontend-<< parameters.workflowId >>
+#            aws s3 rm "s3://udapeople-<< parameters.workflowId >>" --recursive
+#            aws cloudformation delete-stack --stack-name udapeople-backend-<< parameters.workflowId >>
+#            aws cloudformation delete-stack --stack-name udapeople-frontend-<< parameters.workflowId >>
   revert-migrations:
     description: Revert the last migration if successfully run in the current workflow.
     parameters:
@@ -367,12 +367,12 @@ jobs:
             echo "${URL}" 
             if curl -s ${URL} | grep "Welcome"
             then
-              exit 0
+              exit 1
             else
               exit 1
             fi
-#      - destroy-environment
-#      - revert-migrations
+      - destroy-environment
+      - revert-migrations
 
   cloudfront-update:
     docker:
@@ -447,7 +447,7 @@ workflows:
       - deploy-backend:
           requires: [ configure-infrastructure ]
       - smoke-test:
-          requires: [ deploy-backend, deploy-frontend ]
+          requires: [ deploy-frontend ]
       - cloudfront-update:
           requires: [ smoke-test ]
       - cleanup:
