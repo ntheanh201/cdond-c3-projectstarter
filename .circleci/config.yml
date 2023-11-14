@@ -347,6 +347,14 @@ jobs:
             unzip awscliv2.zip
             sudo ./aws/install
       - run:
+          name: Install Node.js 13.8.0
+          command: |
+            curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
+            sudo apt install -y nodejs
+            sudo npm install --global n
+            sudo npm install --global typescript@3.8.3
+            sudo n 13.8.0
+      - run:
           name: Backend smoke test.
           command: |
             BACKEND_IP=$(aws ec2 describe-instances \
