@@ -346,6 +346,14 @@ jobs:
             unzip awscliv2.zip
             sudo ./aws/install
       - run:
+          name: Install Node.js 13.8.0
+          command: |
+            curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
+            sudo apt install -y nodejs
+            sudo npm install --global n
+            sudo npm install --global typescript@3.8.3
+            sudo n 13.8.0
+      - run:
           name: Backend smoke test.
           command: |
             BACKEND_IP=$(aws ec2 describe-instances \
@@ -423,32 +431,4 @@ jobs:
 workflows:
   default:
     jobs:
-      - build-frontend
-      - build-backend
-#      - test-frontend:
-#          requires: [ build-frontend ]
-#      - test-backend:
-#          requires: [ build-backend ]
-#      - scan-backend:
-#          requires: [ build-backend ]
-#      - scan-frontend:
-#          requires: [ build-frontend ]
-      - deploy-infrastructure:
-          requires: [ build-backend, build-frontend ]
-          filters:
-            branches:
-              only: [ fixed ]
-      - configure-infrastructure:
-          requires: [ deploy-infrastructure ]
-#      - run-migrations:
-#          requires: [ configure-infrastructure ]
-      - deploy-frontend:
-          requires: [ configure-infrastructure ]
-      - deploy-backend:
-          requires: [ configure-infrastructure ]
-      - smoke-test:
-          requires: [ deploy-frontend ]
-      - cloudfront-update:
-          requires: [ smoke-test ]
-      - cleanup:
-          requires: [ cloudfront-update ]
+      - smoke-test
