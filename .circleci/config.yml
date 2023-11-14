@@ -324,6 +324,7 @@ jobs:
             echo TYPEORM_PASSWORD=${TYPEORM_PASSWORD} >> "backend/.env"
             echo TYPEORM_DATABASE=${TYPEORM_DATABASE} >> "backend/.env"
             cd backend
+            npm install
             npm run build
             tar -czvf backend.tar.gz dist/* package*
             cp backend.tar.gz .circleci/ansible/roles/deploy/files
