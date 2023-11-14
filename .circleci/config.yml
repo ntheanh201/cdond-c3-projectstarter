@@ -309,7 +309,7 @@ jobs:
             curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
             sudo apt install -y nodejs
             sudo npm install --global n
-            sudo npm install --global typescript
+            sudo npm install --global typescript@3.8.3
             sudo n 13.8.0
       - run:
           name: Deploy backend
