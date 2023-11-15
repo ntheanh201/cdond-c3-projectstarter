@@ -1,4 +1,7 @@
 ## URLs
-https://github.com/ngocntuet1702/cdond-c3-projectstarter
-
+- Github repository: https://github.com/ngocntuet1702/cdond-c3-projectstarter
+- S3 Bucket: http://udapeople-25bd244.s3-website-ap-southeast-1.amazonaws.com/
+- Backend URL: http://ec2-13-229-111-33.ap-southeast-1.compute.amazonaws.com:3030/
+- CloudFront URL: https://d16gcw02ivuhjt.cloudfront.net/
+- Prometheus Server: http://54.169.88.49:9090/
 ### GitHub
