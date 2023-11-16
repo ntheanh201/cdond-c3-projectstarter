@@ -32,12 +32,12 @@ commands:
             # Curl command here to see if there was a successful migration associated with the workflow id, store result in SUCCESS variable
             SUCCESS=$(curl --insecure https://kvdb.io/9GE4jRtKznmVKRfvdBABBe/migration_${CIRCLE_WORKFLOW_ID:0:7})
             echo $SUCCESS
-            if(( $SUCCESS==1 ));
+            if [ "$SUCCESS" = "1" ];
             then
-              cd ~/project/backend
+              cd backend
               npm install
               npm run migrations:revert
-            fi
+            fi 
 
 jobs:
   build-frontend:
@@ -231,7 +231,7 @@ jobs:
             echo $TYPEORM_CONNECTION
             echo $TYPEORM_HOST
             npm install
-            npm run migrations > migrations.txt
+            npm run migrations > migrations_dump.txt
             cat migrations.txt
             ls | grep migrations.txt
       - run:
@@ -379,7 +379,7 @@ jobs:
             echo "${URL}" 
             if curl -s ${URL} | grep "Welcome"
             then
-              exit 0
+              exit 1
             else
               exit 1
             fi
