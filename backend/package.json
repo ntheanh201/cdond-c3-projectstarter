@@ -29,7 +29,9 @@
     "migrations-win": "ts-node node_modules/typeorm/cli.js migration:run",
     "premigrations:revert": "npm run build",
     "migrations:revert": "ts-node -r dotenv/config node_modules/.bin/typeorm migration:revert",
-    "update:domain": "npm update @kiwihr/kiwi-domain"
+    "update:domain": "npm update @kiwihr/kiwi-domain",
+    "prepare": "npm run snyk-protect",
+    "snyk-protect": "snyk-protect"
   },
   "dependencies": {
     "@hapi/joi": "^17.1.1",
@@ -64,7 +66,8 @@
     "typeorm": "^0.2.24",
     "uuid": "^3.4.0",
     "winston-loggly-bulk": "^2.0.3",
-    "winston-slack-webhook": "^0.1.6"
+    "winston-slack-webhook": "^0.1.6",
+    "@snyk/protect": "latest"
   },
   "devDependencies": {
     "@nestjs/testing": "^6.11.11",
@@ -113,5 +116,6 @@
     ],
     "testEnvironment": "node",
     "verbose": false
-  }
+  },
+  "snyk": true
 }
