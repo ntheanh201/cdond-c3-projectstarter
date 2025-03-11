@@ -33,7 +33,7 @@
   },
   "dependencies": {
     "@hapi/joi": "^17.1.1",
-    "@nestjs/common": "^6.11.11",
+    "@nestjs/common": "^9.0.0",
     "@nestjs/core": "^6.11.11",
     "@nestjs/cqrs": "^6.1.0",
     "@nestjs/jwt": "^6.0.0",
@@ -61,7 +61,7 @@
     "reflect-metadata": "^0.1.12",
     "rxjs": "^6.5.4",
     "swagger-ui-express": "^4.1.4",
-    "typeorm": "^0.2.24",
+    "typeorm": "^0.3.21",
     "uuid": "^3.4.0",
     "winston-loggly-bulk": "^2.0.3",
     "winston-slack-webhook": "^0.1.6"
